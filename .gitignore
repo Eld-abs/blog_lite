@@ -1,0 +1,20 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+
+# Bytecode
+*.pyc
+*.pyo
+
+# Virtualenv
+venv/
+env/
+
+# Django
+.env
+*.log
+
+# Local settings
+config/settings/dev.py

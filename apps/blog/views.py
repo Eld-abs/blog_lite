@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.utils import timezone
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
@@ -9,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError, PermissionDenied
 
 from apps.blog.models import Post, SubPost, Like
-from apps.blog.serializers import PostSerializer, SubPostSerializer
+from apps.blog.serializers import PostSerializer, SubPostSerializer, LikeSerializer
 from apps.blog.pagination import PostPagination
 from apps.blog.services import MassCreation
 
@@ -95,8 +96,6 @@ class PostViewSet(ModelViewSet):
           item['post'] = post
           if 'id' not in item:
             create_data.append(item)
-            print('getattr: ', getattr(item, 'id', None))
-            print(item)
           else:
             update_data.append(item)
             update_ids.add(item['id'])
@@ -110,10 +109,6 @@ class PostViewSet(ModelViewSet):
 
         # delete
         delete_ids = old_ids - update_ids
-        print('old_ids: ', old_ids)
-        print('update_ids: ', update_ids)
-        print('delete_ids: ', delete_ids)
-        print('update_data: ', update_data)
         if delete_ids:
           SubPost.objects.filter(id__in=delete_ids, post=post).delete()
 
@@ -153,10 +148,34 @@ class SubPostViewSet(ModelViewSet):
   queryset = SubPost.objects.all()
   serializer_class = SubPostSerializer
 
+  def create(self, request, *args, **kwargs):
+    post_id = self.request.data.get('post')
+    user = self.request.user
+    
+    post = get_object_or_404(Post, id=post_id)
+    if post.author != user:
+      raise PermissionDenied(f'Вы не владелец поста: {post}')
+    
+    return super().create(request, *args, **kwargs)
+
   def perform_bulk_create(serializer_validated_data):
     SubPost.objects.bulk_create([SubPost(**item) for item in serializer_validated_data])
 
 
-# class LikeViewSet(ModelViewSet):
-#   queryset = Like.objects.all()
-#   seria
+class LikeViewSet(ModelViewSet):
+  queryset = Like.objects.all()
+  serializer_class = LikeSerializer
+
+  @action(detail=False, methods=['post'])
+  def like(self, request, *args, **kwargs):
+    user = request.user
+    post_id = request.data.get('post')
+    like = Like.objects.filter(user=user, post__id=post_id).first()
+    if like:
+      like.delete()
+      return Response({'massage': 'Лайк убран'})
+    else:
+      response = super().create(request, *args, **kwargs)
+      if response.status_code == status.HTTP_201_CREATED:
+        return Response({'massage': 'Вы поставили лайк'}, status=status.HTTP_200_OK)
+      return response

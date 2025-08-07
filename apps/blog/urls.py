@@ -1,6 +1,6 @@
 from django.urls import path
 
-from apps.blog.views import PostViewSet, SubPostViewSet
+from apps.blog.views import PostViewSet, SubPostViewSet, LikeViewSet
 
 
 post_urlpatterns = [
@@ -14,7 +14,7 @@ post_urlpatterns = [
     }
   )),  
 
-  # path('posts/<int:pk>/like/', ),
+  path('posts/<int:pk>/like/', LikeViewSet.as_view({'post': 'like'})),
   # path('posts/<int:pk>/view/', )
 ]
 

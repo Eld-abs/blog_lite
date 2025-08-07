@@ -1,5 +1,5 @@
 from rest_framework import serializers 
-from apps.blog.models import Post, SubPost
+from apps.blog.models import Post, SubPost, Like
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -12,7 +12,7 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class SubPostSerializer(serializers.ModelSerializer):
-  id = serializers.IntegerField(required=False)
+  id = serializers.ReadOnlyField(required=False)
 
   class Meta:
     model = SubPost
@@ -20,3 +20,11 @@ class SubPostSerializer(serializers.ModelSerializer):
     extra_kwargs = {
       'post': {'required': False}
     }
+
+
+class LikeSerializer(serializers.ModelSerializer):
+  user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+  class Meta:
+    model = Like
+    fields = ['user', 'post', 'create_at']

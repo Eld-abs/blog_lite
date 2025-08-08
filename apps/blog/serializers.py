@@ -5,10 +5,11 @@ from apps.blog.models import Post, SubPost, Like
 class PostSerializer(serializers.ModelSerializer):
   author = serializers.HiddenField(default=serializers.CurrentUserDefault())
   author_display = serializers.ReadOnlyField(source='author.username')
+  views_count = serializers.ReadOnlyField()
 
   class Meta:
     model = Post
-    fields = ['id', 'title', 'author', 'author_display', 'body', 'create_at', 'update_at']
+    fields = ['id', 'title', 'author', 'author_display', 'body', 'create_at', 'update_at', 'views_count']
 
 
 class SubPostSerializer(serializers.ModelSerializer):

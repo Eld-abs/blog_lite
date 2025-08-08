@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.utils import timezone
 from django.db import transaction
+from django.db.models import F
 from django.shortcuts import get_object_or_404
 
 from rest_framework import status
@@ -139,6 +140,10 @@ class PostViewSet(ModelViewSet):
 
     return Response(post_serializer.data)
   
+  # Добавить просмотр
+  def add_view(self, request, pk):
+    Post.objects.filter(pk=pk).update(views_count=F('views_count')+1)
+    return Response(status=204)
   
   def perform_bulk_create(self, serializer_validated_data):
     Post.objects.bulk_create([Post(**item) for item in serializer_validated_data])

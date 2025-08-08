@@ -15,7 +15,7 @@ post_urlpatterns = [
   )),  
 
   path('posts/<int:pk>/like/', LikeViewSet.as_view({'post': 'like'})),
-  # path('posts/<int:pk>/view/', )
+  path('posts/<int:pk>/view/', PostViewSet.as_view({'get': 'add_view'}))
 ]
 
 subpost_urlpatterns = [

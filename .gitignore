@@ -1,5 +1,5 @@
 
-# Python
+# Python 3.11
 __pycache__/
 *.py[cod]
 *.sqlite3
@@ -18,3 +18,24 @@ env/
 
 # Local settings
 config/settings/dev.py
+
+# tests
+# tests/
+# tests/**
+
+# ременные файлы
+.coverage
+htmlcov/
+.coverage.*
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Pytest cache
+.pytest_cache/
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp

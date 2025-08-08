@@ -1,10 +1,36 @@
-from django.urls import path
+from django.urls import path, include
+
+from rest_framework.routers import DefaultRouter
 
 from apps.blog.views import PostViewSet, SubPostViewSet, LikeViewSet
 
 
+router = DefaultRouter()
+
+router.register(r'posts', PostViewSet, basename='post')
+router.register(r'subposts', SubPostViewSet, basename='subpost')
+
+
+urlpatterns = [
+  path(
+    'posts/<int:pk>/like/', 
+    LikeViewSet.as_view({'post': 'like'}),
+    name='post-like' 
+  ),
+
+  path('', include(router.urls))
+]
+
+
+# Снизу маршруты которые доступны
+"""
 post_urlpatterns = [
-  path('posts/', PostViewSet.as_view({'get': 'list', 'post': 'create'})),
+  path('posts/', PostViewSet.as_view(
+    {
+      'get': 'list', 
+      'post': 'create'
+    }
+  )),
   path('posts/<int:pk>/', PostViewSet.as_view(
     {
       'get': 'retrieve', 
@@ -19,7 +45,12 @@ post_urlpatterns = [
 ]
 
 subpost_urlpatterns = [
-  path('subposts/', SubPostViewSet.as_view({'get': 'list', 'post': 'create'})),
+  path('subposts/', SubPostViewSet.as_view(
+    {
+      'get': 'list', 
+      'post': 'create'
+    }
+  )),
   path('subposts/<int:pk>/', SubPostViewSet.as_view(
     {
       'get': 'retrieve', 
@@ -28,6 +59,4 @@ subpost_urlpatterns = [
     }
   )),  
 ]
-
-urlpatterns = [
-] + post_urlpatterns + subpost_urlpatterns
+"""

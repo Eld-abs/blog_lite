@@ -23,8 +23,13 @@ class SubPostSerializer(serializers.ModelSerializer):
     }
 
 
+class SubPostWithIDSerializer(SubPostSerializer):
+  id = serializers.IntegerField(required=False)
+
+
 class LikeSerializer(serializers.ModelSerializer):
   user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+  post = serializers.PrimaryKeyRelatedField(queryset=Post.objects.all())
 
   class Meta:
     model = Like

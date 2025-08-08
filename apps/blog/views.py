@@ -11,11 +11,17 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError, PermissionDenied
 
 from apps.blog.models import Post, SubPost, Like
-from apps.blog.serializers import PostSerializer, SubPostSerializer, LikeSerializer
+from apps.blog.serializers import (
+  PostSerializer, 
+  SubPostSerializer, 
+  SubPostWithIDSerializer, 
+  LikeSerializer
+)
 from apps.blog.pagination import PostPagination
 from apps.blog.services import MassCreation
 
 class PostViewSet(ModelViewSet):
+  http_method_names = ['get', 'post', 'put', 'patch', 'delete']
   queryset = Post.objects.all()
   serializer_class = PostSerializer
 
@@ -38,8 +44,9 @@ class PostViewSet(ModelViewSet):
         item['updated_at'] = now
       serializer = self.get_serializer(data=data, many=True)
       serializer.is_valid(raise_exception=True)
-      self.perform_bulk_create(serializer.validated_data)
-      return Response(serializer.data, status=status.HTTP_201_CREATED)
+      created_objects = self.perform_bulk_create(serializer.validated_data)
+      output_serializer = self.get_serializer(created_objects, many=True)
+      return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
     # Продолжаем работу если только 1 пост
     subposts_data = data.get('subposts', None)
@@ -50,7 +57,10 @@ class PostViewSet(ModelViewSet):
         raise ValidationError({"massages": "subposts ожидается type: list"})
       request.data.pop('subposts', None)
       post_serializer = self.get_serializer(data=data)
-      subpost_serializer = SubPostSerializer(data=subposts_data, many=True)
+      subpost_serializer = SubPostSerializer(
+        data=subposts_data, 
+        many=True
+      )
 
       post_serializer.is_valid(raise_exception=True)
       subpost_serializer.is_valid(raise_exception=True)
@@ -69,6 +79,7 @@ class PostViewSet(ModelViewSet):
     return super().create(request, *args, **kwargs)
   
   def update(self, request, *args, **kwargs):
+    user = request.user
     subposts_data = request.data.get('subposts', None)
     request.data.pop('subposts', None)
 
@@ -77,13 +88,19 @@ class PostViewSet(ModelViewSet):
     post_serializer = self.get_serializer(instance, data=request.data, partial=partial)
     post_serializer.is_valid(raise_exception=True)
 
+    post_id = kwargs['pk']
+    post_obj = get_object_or_404(Post, id=post_id)
+
+    if post_obj.author != user:
+      raise PermissionDenied(f'Доступ к посту {post_obj.id} ограничен')
+
     # Есть ли субпосты вместе с постом
     if subposts_data is not None:
       if not isinstance(subposts_data, list):
         raise ValidationError({"massages": "subposts ожидается type: list"})
 
       with transaction.atomic():
-        subpost_serializer = SubPostSerializer(data=subposts_data, many=True, partial=True)
+        subpost_serializer = SubPostWithIDSerializer(data=subposts_data, many=True, partial=True)
         subpost_serializer.is_valid(raise_exception=True)
 
         all_new_ids = set()
@@ -141,15 +158,17 @@ class PostViewSet(ModelViewSet):
     return Response(post_serializer.data)
   
   # Добавить просмотр
+  @action(detail=True, methods=['get'], url_path='view')
   def add_view(self, request, pk):
     Post.objects.filter(pk=pk).update(views_count=F('views_count')+1)
     return Response(status=204)
   
   def perform_bulk_create(self, serializer_validated_data):
-    Post.objects.bulk_create([Post(**item) for item in serializer_validated_data])
+    return Post.objects.bulk_create([Post(**item) for item in serializer_validated_data])
 
 
 class SubPostViewSet(ModelViewSet):
+  http_method_names = ['get', 'post', 'put', 'delete']
   queryset = SubPost.objects.all()
   serializer_class = SubPostSerializer
 
@@ -164,23 +183,30 @@ class SubPostViewSet(ModelViewSet):
     return super().create(request, *args, **kwargs)
 
   def perform_bulk_create(serializer_validated_data):
-    SubPost.objects.bulk_create([SubPost(**item) for item in serializer_validated_data])
+    return SubPost.objects.bulk_create([SubPost(**item) for item in serializer_validated_data])
 
 
 class LikeViewSet(ModelViewSet):
   queryset = Like.objects.all()
   serializer_class = LikeSerializer
 
-  @action(detail=False, methods=['post'])
+  @action(detail=True, methods=['post'])
   def like(self, request, *args, **kwargs):
     user = request.user
-    post_id = request.data.get('post')
-    like = Like.objects.filter(user=user, post__id=post_id).first()
+    post_id = kwargs['pk']
+
+    post = get_object_or_404(Post, id=post_id)
+
+    like = Like.objects.filter(user=user, post=post).first()
     if like:
       like.delete()
-      return Response({'massage': 'Лайк убран'})
-    else:
-      response = super().create(request, *args, **kwargs)
-      if response.status_code == status.HTTP_201_CREATED:
-        return Response({'massage': 'Вы поставили лайк'}, status=status.HTTP_200_OK)
-      return response
+      return Response({'message': 'Лайк убран'})
+
+    serializer = self.get_serializer(data={
+      'post': post.id,
+      'user': user.id
+    })
+    serializer.is_valid(raise_exception=True)
+    self.perform_create(serializer)
+    return Response({'message': 'Вы поставили лайк'}, status=status.HTTP_200_OK)
+  

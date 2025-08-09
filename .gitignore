@@ -1,29 +1,22 @@
-
-# Python 3.11
+# Python
 __pycache__/
 *.py[cod]
-*.sqlite3
-
-# Bytecode
-*.pyc
 *.pyo
+*.pyc
 
-# Virtualenv
+# Virtual environments
 venv/
 env/
 
-# Django
-.env
-*.log
+# SQLite database files
+*.sqlite3
 
-# Local settings
+# Django
+*.log
+.env
 config/settings/dev.py
 
-# tests
-# tests/
-# tests/**
-
-# ременные файлы
+# Tests coverage
 .coverage
 htmlcov/
 .coverage.*
@@ -32,10 +25,25 @@ coverage.xml
 *.cover
 *.py,cover
 
-# Pytest cache
+# Pytest
 .pytest_cache/
 
-# IDE/Editor files
+# IDE/editor
 .vscode/
 .idea/
 *.swp
+
+# Docker
+*.dockerfile
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# Docker volumes and data
+**/tmp/
+**/data/
+
+# macOS files (если кто-то на маке)
+.DS_Store
+
+# Windows thumbnail cache
+Thumbs.db

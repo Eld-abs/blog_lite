@@ -10,6 +10,9 @@ on:
 jobs:
   lint_and_test:
     runs-on: ubuntu-latest
+    env:
+      SECRET_KEY: 'django-insecure-uiaweohgihsioJEPAWJpjijOJJRSIJGIPWEIoiniPEGJPOjPIejiapbrjnAIOWEIpwjegpIWEJ3JPIjBIREPI0H40IEH0IBO3NDINliHPiIp;zbzbf=zr-+_40jzinrpb'
+      DJANGO_SETTINGS_MODULE: 'config.settings.base'
 
     steps:
       - name: Checkout repository

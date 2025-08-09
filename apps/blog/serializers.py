@@ -3,9 +3,17 @@ from apps.blog.models import Post, SubPost, Like
 
 
 class PostSerializer(serializers.ModelSerializer):
-  author = serializers.HiddenField(default=serializers.CurrentUserDefault())
-  author_display = serializers.ReadOnlyField(source='author.username')
-  views_count = serializers.ReadOnlyField()
+  author = serializers.HiddenField(
+    default=serializers.CurrentUserDefault(), 
+    help_text="Автор поста (автоматически)"
+  )
+  author_display = serializers.ReadOnlyField(
+    source='author.username', 
+    help_text="Имя автора"
+  )
+  views_count = serializers.ReadOnlyField(
+    help_text="Количество просмотров"
+  )
 
   class Meta:
     model = Post

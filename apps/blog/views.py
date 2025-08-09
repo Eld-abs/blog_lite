@@ -8,7 +8,15 @@ from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError, PermissionDenied
+from rest_framework.exceptions import ValidationError, PermissionDenied, NotFound
+
+from drf_spectacular.utils import (
+  extend_schema, 
+  OpenApiParameter, 
+  OpenApiExample,
+  OpenApiResponse
+  )
+from drf_spectacular.types import OpenApiTypes
 
 from apps.blog.models import Post, SubPost, Like
 from apps.blog.serializers import (
@@ -19,7 +27,29 @@ from apps.blog.serializers import (
 )
 from apps.blog.pagination import PostPagination
 from apps.blog.services import MassCreation
+from apps.blog.docs.post_doc import (
+  LIST_POSTS_DOCS,
+  RETRIEVE_POST_DOCS,
+  ADD_VIEW_DOCS,
+  DELETE_POST_DOCS,
+  CREATE_POST_DOCS,
+  UPDATE_POST_DOCS,
+  PARTIAL_UPDATE_POST_DOCS,
+  POST_VIEW_SET_DOCS)
+from apps.blog.docs.subpost_doc import (
+  DELETE_SUBPOST_DOCS,
+  UPDATE_SUBPOST_DOCS,
+  CREATE_SUBPOST_DOCS,
+  RETRIEVE_SUBPOST_DOCS,
+  LIST_SUBPOSTS_DOCS,
+  SUBPOST_VIEW_SET_DOCS
+)
+from apps.blog.docs.like_doc import (
+  LIKE_VIEW_SET_DOCS,
+  ADD_RO_REMOVE_LIKE
+)
 
+@extend_schema(**POST_VIEW_SET_DOCS)
 class PostViewSet(ModelViewSet):
   http_method_names = ['get', 'post', 'put', 'patch', 'delete']
   queryset = Post.objects.all()
@@ -33,6 +63,15 @@ class PostViewSet(ModelViewSet):
     self.pagination_class = None
     return None
   
+  @extend_schema(**LIST_POSTS_DOCS)
+  def list(self, request, *args, **kwargs):
+    return super().list(request, *args, **kwargs)
+
+  @extend_schema(**RETRIEVE_POST_DOCS)
+  def retrieve(self, request, *args, **kwargs):
+    return super().retrieve(request, *args, **kwargs)
+  
+  @extend_schema(**CREATE_POST_DOCS)
   def create(self, request, *args, **kwargs):
     data = request.data.copy()
 
@@ -78,6 +117,7 @@ class PostViewSet(ModelViewSet):
 
     return super().create(request, *args, **kwargs)
   
+  @extend_schema(**UPDATE_POST_DOCS)
   def update(self, request, *args, **kwargs):
     user = request.user
     subposts_data = request.data.get('subposts', None)
@@ -157,21 +197,46 @@ class PostViewSet(ModelViewSet):
 
     return Response(post_serializer.data)
   
-  # Добавить просмотр
+
+  @extend_schema(**PARTIAL_UPDATE_POST_DOCS)
+  def partial_update(self, request, *args, **kwargs):
+    kwargs['partial'] = True
+    return self.update(request, *args, **kwargs)
+  
+  @extend_schema(**ADD_VIEW_DOCS)
   @action(detail=True, methods=['get'], url_path='view')
   def add_view(self, request, pk):
-    Post.objects.filter(pk=pk).update(views_count=F('views_count')+1)
-    return Response(status=204)
+    updated = Post.objects.filter(pk=pk).update(views_count=F('views_count')+1)
+    if updated == 0:
+      raise NotFound(f"Пост с id={pk} не найден")
+    return Response(status=status.HTTP_200_OK)
+  
+  @extend_schema(**DELETE_POST_DOCS)
+  def destroy(self, request, *args, **kwargs):
+    return super().destroy(request, *args, **kwargs)
   
   def perform_bulk_create(self, serializer_validated_data):
     return Post.objects.bulk_create([Post(**item) for item in serializer_validated_data])
 
 
+@extend_schema(**SUBPOST_VIEW_SET_DOCS)
 class SubPostViewSet(ModelViewSet):
-  http_method_names = ['get', 'post', 'put', 'delete']
+  http_method_names = ['list', 'get', 'post', 'put', 'delete', 'retrieve']
   queryset = SubPost.objects.all()
   serializer_class = SubPostSerializer
 
+  
+  @extend_schema(**LIST_SUBPOSTS_DOCS)
+  def list(self, request, *args, **kwargs):
+    return super().list(request, *args, **kwargs)
+
+  
+  @extend_schema(**RETRIEVE_SUBPOST_DOCS)
+  def retrieve(self, request, *args, **kwargs):
+    return super().retrieve(request, *args, **kwargs)
+
+
+  @extend_schema(**CREATE_SUBPOST_DOCS)
   def create(self, request, *args, **kwargs):
     post_id = self.request.data.get('post')
     user = self.request.user
@@ -181,15 +246,25 @@ class SubPostViewSet(ModelViewSet):
       raise PermissionDenied(f'Вы не владелец поста: {post}')
     
     return super().create(request, *args, **kwargs)
+  
+  @extend_schema(**DELETE_SUBPOST_DOCS)
+  def destroy(self, request, *args, **kwargs):
+    return super().destroy(request, *args, **kwargs)
+
+  @extend_schema(**UPDATE_SUBPOST_DOCS)
+  def update(self, request, *args, **kwargs):
+    return super().update(request, *args, **kwargs)
 
   def perform_bulk_create(serializer_validated_data):
     return SubPost.objects.bulk_create([SubPost(**item) for item in serializer_validated_data])
 
 
+@extend_schema(**LIKE_VIEW_SET_DOCS)
 class LikeViewSet(ModelViewSet):
   queryset = Like.objects.all()
   serializer_class = LikeSerializer
 
+  @extend_schema(**ADD_RO_REMOVE_LIKE)
   @action(detail=True, methods=['post'])
   def like(self, request, *args, **kwargs):
     user = request.user

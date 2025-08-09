@@ -68,10 +68,10 @@ class ViewTestCase(APITestCase):
   def setUp(self):
     self.client.force_login(self.user)
 
-  # GET Добавить просмотр (204_NO_CONTENT)
+  # GET Добавить просмотр (200_OK)
   def test_view_add(self):
     url = reverse('post-add-view', args=[self.post_1.pk])
     response = self.client.get(url)
     self.post_1.refresh_from_db()
-    self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+    self.assertEqual(response.status_code, status.HTTP_200_OK)
     self.assertEqual(self.post_1.views_count, 1)

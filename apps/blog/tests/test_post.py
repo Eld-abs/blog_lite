@@ -78,7 +78,7 @@ class PostApiTestCase(APITestCase):
   def test_get_not_pagination_class(self):
     Post.objects.all().delete()
 
-    post_1 = Post.objects.create(
+    Post.objects.create(
       title='Пост 1', 
       body='Содержание',
       author=self.user

@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import F
@@ -10,13 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError, PermissionDenied, NotFound
 
-from drf_spectacular.utils import (
-  extend_schema, 
-  OpenApiParameter, 
-  OpenApiExample,
-  OpenApiResponse
-  )
-from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 
 from apps.blog.models import Post, SubPost, Like
 from apps.blog.serializers import (
@@ -26,7 +19,6 @@ from apps.blog.serializers import (
   LikeSerializer
 )
 from apps.blog.pagination import PostPagination
-from apps.blog.services import MassCreation
 from apps.blog.docs.post_doc import (
   LIST_POSTS_DOCS,
   RETRIEVE_POST_DOCS,

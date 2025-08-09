@@ -1,10 +1,5 @@
 from django.utils import timezone
 
-from rest_framework import status
-from rest_framework.response import Response
-
-from apps.blog.models import Post
-
 # пока что не рабочий, логика пока что в apps/blog/views.py
 class MassCreation:
   def specify_data(data):

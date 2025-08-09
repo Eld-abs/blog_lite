@@ -34,7 +34,7 @@ class LikeTestCase(APITestCase):
 
   # POST убрать лайк (200_OK)
   def test_remove_like(self):
-    like_1 = Like.objects.create(
+    Like.objects.create(
       user=self.user,
       post=self.post_1
     )

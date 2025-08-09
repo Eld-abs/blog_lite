@@ -1,7 +1,4 @@
-from drf_spectacular.utils import OpenApiExample, OpenApiResponse, OpenApiParameter
-from drf_spectacular.types import OpenApiTypes
-
-from apps.blog.serializers import SubPostSerializer
+from drf_spectacular.utils import OpenApiExample, OpenApiResponse
 
 LIKE_VIEW_SET_DOCS = {
   "tags": ["Лайки"],
